@@ -1,0 +1,34 @@
+version: '3.8'
+name: simple
+services:
+  counter:
+    build: .
+    image: reg.istry.cz/2023-06-21/ondrej/counter
+    platform: linux/amd64
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.counter.rule: Host(`${HOST:-127.0.0.1}`)
+    depends_on:
+      - redis
+    deploy:
+      replicas: 4
+  redis:
+    image: redis
+    volumes:
+      - redis-data:/data
+  traefik:
+    image: traefik:v2.9
+    command:
+      - --metrics.prometheus=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.http.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  redis-data:
